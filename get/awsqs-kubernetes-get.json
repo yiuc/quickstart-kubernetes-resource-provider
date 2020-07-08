@@ -1,0 +1,109 @@
+{
+    "typeName": "AWSQS::Kubernetes::Get",
+    "description": "Fetches data from a kubernetes cluster using jsonpath expressions.",
+    "sourceUrl": "https://github.com/aws-quickstart/quickstart-amazon-eks.git",
+    "properties": {
+        "ClusterName": {
+            "description": "Name of the EKS cluster to query",
+            "type": "string"
+        },
+        "Name": {
+            "description": "Name of the kubernetes resource to query, should contain kind. Eg.: pod/nginx",
+            "type": "string"
+        },
+        "Namespace": {
+            "description": "Kubernetes namespace containing the resource",
+            "type": "string"
+        },
+        "JsonPath": {
+            "description": "Jsonpath expression to filter the output",
+            "type": "string"
+        },
+        "Response": {
+            "description": "query response",
+            "type": "string"
+        },
+        "Id": {
+            "description": "Response from the kubernetes api represented as a string, will be a hash representation if the response is > 1000 characters.",
+            "type": "string"
+        }
+    },
+    "additionalProperties": false,
+    "required": [
+        "ClusterName",
+        "Namespace",
+        "Name",
+        "JsonPath"
+    ],
+    "readOnlyProperties": [
+        "/properties/Response",
+        "/properties/Id"
+    ],
+    "primaryIdentifier": [
+        "/properties/ClusterName",
+        "/properties/Namespace",
+        "/properties/Name",
+        "/properties/JsonPath"
+    ],
+    "handlers": {
+        "create": {
+            "permissions": [
+                "ssm:GetParameter",
+                "eks:DescribeCluster",
+                "ec2:Describe*",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "iam:PassRole",
+                "sts:GetCallerIdentity",
+                "lambda:*"
+            ]
+        },
+        "read": {
+            "permissions": [
+                "ssm:GetParameter",
+                "eks:DescribeCluster",
+                "ec2:Describe*",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "iam:PassRole",
+                "sts:GetCallerIdentity",
+                "lambda:*"
+            ]
+        },
+        "update": {
+            "permissions": [
+                "ssm:GetParameter",
+                "eks:DescribeCluster",
+                "ec2:Describe*",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "iam:PassRole",
+                "lambda:*"
+            ]
+        },
+        "delete": {
+            "permissions": [
+                "ssm:GetParameter",
+                "eks:DescribeCluster",
+                "ec2:Describe*",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "iam:PassRole",
+                "sts:GetCallerIdentity",
+                "lambda:*"
+            ]
+        },
+        "list": {
+            "permissions": [
+                "ssm:GetParameter",
+                "eks:DescribeCluster",
+                "ec2:Describe*",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "iam:PassRole",
+                "sts:GetCallerIdentity",
+                "lambda:*"
+            ]
+        }
+    }
+}
