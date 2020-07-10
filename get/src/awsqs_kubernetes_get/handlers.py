@@ -7,7 +7,7 @@ import time
 from hashlib import md5
 import boto3
 import hashlib
-
+import os
 
 from cloudformation_cli_python_lib import (
     Action,
@@ -20,7 +20,7 @@ from cloudformation_cli_python_lib import (
 )
 
 from .models import ResourceHandlerRequest, ResourceModel
-from .vpc import proxy_needed, proxy_call, put_function, delete_function
+from .vpc import proxy_needed, proxy_call, put_function
 
 # Use this logger to forward log messages to CloudWatch Logs.
 LOG = logging.getLogger(__name__)
@@ -44,7 +44,10 @@ def run_command(command):
 
 
 def create_kubeconfig(cluster_name):
-    run_command(f"aws eks update-kubeconfig --name {cluster_name} --alias {cluster_name}")
+    os.environ['PATH'] = f"/var/task/bin:{os.environ['PATH']}"
+    os.environ['PYTHONPATH'] = f"/var/task:{os.environ.get('PYTHONPATH', '')}"
+    os.environ['KUBECONFIG'] = "/tmp/kube.config"
+    run_command(f"aws eks update-kubeconfig --name {cluster_name} --alias {cluster_name} --kubeconfig /tmp/kube.config")
     run_command(f"kubectl config use-context {cluster_name}")
 
 
@@ -75,10 +78,11 @@ def kubectl_get(model: ResourceModel, sess) -> ProgressEvent    :
                 LOG.info("retrying until timeout...")
                 time.sleep(5)
                 retry_timeout = retry_timeout - 5
-    model.Response = outp.encode('utf-8')
+    model.Response = outp
     if len(outp.encode('utf-8')) > 1000:
         outp = 'MD5-' + str(md5(outp.encode('utf-8')).hexdigest())
-    model.Id = outp.encode('utf-8')
+    model.Id = outp
+    LOG.info("returning progress...")
     return ProgressEvent(
         status=OperationStatus.SUCCESS,
         resourceModel=model,
@@ -126,7 +130,6 @@ def delete_handler(
 ) -> ProgressEvent:
     LOG.error("delete handler invoked")
     model = request.desiredResourceState
-    delete_function(f'awsqs-kubernetes-resource-get-proxy-{model._serialize()["ClusterName"]}', session)
     return ProgressEvent(
         status=OperationStatus.SUCCESS,
         resourceModel=model,

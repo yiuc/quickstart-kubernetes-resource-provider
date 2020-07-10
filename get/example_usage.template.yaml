@@ -9,7 +9,7 @@ Resources:
       ClusterName: !Ref ClusterName
       Namespace: kube-system
       Name: cm/aws-auth
-      JsonPath: '.Data'
+      JsonPath: '{.data.mapRoles}'
 Outputs:
   Response:
     Value: !GetAtt Test.Response

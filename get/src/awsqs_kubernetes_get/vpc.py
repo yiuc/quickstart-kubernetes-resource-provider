@@ -58,9 +58,8 @@ def put_function(sess, event):
     role_arn = '/'.join(sts.get_caller_identity()['Arn'].replace(':sts:', ':iam:').replace(':assumed-role/', ':role/')
                         .split('/')[:-1])
     lmbd = sess.client('lambda')
-    shutil.make_archive('/tmp/vpc', 'zip', './')
     try:
-        with open('/tmp/vpc.zip', 'rb') as zip_file:
+        with open('./awsqs_kubernetes_get/vpc.zip', 'rb') as zip_file:
             lmbd.create_function(
                 FunctionName=f'awsqs-kubernetes-resource-get-proxy-{event["ClusterName"]}',
                 Runtime='python3.7',
@@ -78,7 +77,7 @@ def put_function(sess, event):
         if "Function already exist" not in str(e):
             raise
         LOG.warning("function already exists...")
-        with open('/tmp/vpc.zip', 'rb') as zip_file:
+        with open('./awsqs_kubernetes_get/vpc.zip', 'rb') as zip_file:
             lmbd.update_function_code(
                 FunctionName=f'awsqs-kubernetes-resource-get-proxy-{event["ClusterName"]}',
                 ZipFile=zip_file.read()
@@ -112,9 +111,3 @@ def invoke_function(func_arn, event, sess):
                 raise
             LOG.error(str(e))
             time.sleep(10)
-
-
-def delete_function(func_arn, sess):
-    lmbd = sess.client('lambda')
-    LOG.error(func_arn)
-    lmbd.delete_function(FunctionName=func_arn)
