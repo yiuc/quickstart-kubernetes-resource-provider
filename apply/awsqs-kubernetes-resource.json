@@ -1,104 +1,114 @@
 {
     "typeName": "AWSQS::Kubernetes::Resource",
-    "description": "An example resource schema demonstrating some basic constructs and validation rules.",
-    "sourceUrl": "https://github.com/aws-cloudformation/aws-cloudformation-rpdk.git",
-    "definitions": {
-        "InitechDateFormat": {
-            "$comment": "Use the `definitions` block to provide shared resource property schemas",
-            "type": "string",
-            "format": "date-time"
-        },
-        "Memo": {
-            "type": "object",
-            "properties": {
-                "Heading": {
-                    "type": "string"
-                },
-                "Body": {
-                    "type": "string"
-                }
-            },
-            "additionalProperties": false
-        }
-    },
+    "description": "Applys a YAML manifest to the specified Kubernetes cluster",
+    "sourceUrl": "https://github.com/aws-quickstart/quickstart-amazon-eks.git",
     "properties": {
-        "TPSCode": {
-            "description": "A TPS Code is automatically generated on creation and assigned as the unique identifier.",
-            "type": "string",
-            "pattern": "^[A-Z]{3,5}[0-9]{8}-[0-9]{4}$"
+        "ClusterName": {
+            "description": "Name of the EKS cluster",
+            "type": "string"
         },
-        "Title": {
-            "description": "The title of the TPS report is a mandatory element.",
-            "type": "string",
-            "minLength": 20,
-            "maxLength": 250
+        "Namespace": {
+            "description": "Kubernetes namespace",
+            "type": "string"
         },
-        "CoverSheetIncluded": {
-            "description": "Required for all TPS Reports submitted after 2/19/1999",
-            "type": "boolean"
+        "Manifest": {
+            "description": "Text representation of the kubernetes yaml manifests to apply to the cluster.",
+            "type": "string"
         },
-        "DueDate": {
-            "$ref": "#/definitions/InitechDateFormat"
+        "Url": {
+            "type":"string",
+            "description": "Url to the kubernetes yaml manifests to apply to the cluster. Urls starting with s3:// will be fetched using an authenticated S3 read."
         },
-        "ApprovalDate": {
-            "$ref": "#/definitions/InitechDateFormat"
+        "name": {
+            "type":"string",
+            "description": "Name of the resource."
         },
-        "Memo": {
-            "$ref": "#/definitions/Memo"
+        "resourceVersion": {
+            "type":"string",
+            "description": "Resource version."
         },
-        "SecondCopyOfMemo": {
-            "description": "In case you didn't get the first one.",
-            "$ref": "#/definitions/Memo"
+        "selfLink": {
+            "type":"string",
+            "description": "Link returned by the kubernetes api."
         },
-        "TestCode": {
-            "type": "string",
-            "enum": [
-                "NOT_STARTED",
-                "CANCELLED"
-            ]
-        },
-        "Authors": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
+        "uid": {
+            "type":"string",
+            "description": "Resource unique ID."
         }
     },
     "additionalProperties": false,
     "required": [
-        "TestCode",
-        "Title"
+        "ClusterName",
+        "Namespace"
     ],
     "readOnlyProperties": [
-        "/properties/TPSCode"
+        "/properties/name",
+        "/properties/resourceVersion",
+        "/properties/selfLink",
+        "/properties/uid"
     ],
     "primaryIdentifier": [
-        "/properties/TPSCode"
+        "/properties/ClusterName",
+        "/properties/selfLink"
     ],
     "handlers": {
         "create": {
             "permissions": [
-                "initech:CreateReport"
+                "ssm:GetParameter",
+                "eks:DescribeCluster",
+                "ec2:Describe*",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "iam:PassRole",
+                "sts:GetCallerIdentity",
+                "lambda:*"
             ]
         },
         "read": {
             "permissions": [
-                "initech:DescribeReport"
+                "ssm:GetParameter",
+                "eks:DescribeCluster",
+                "ec2:Describe*",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "iam:PassRole",
+                "sts:GetCallerIdentity",
+                "lambda:*"
             ]
         },
         "update": {
             "permissions": [
-                "initech:UpdateReport"
+                "ssm:GetParameter",
+                "eks:DescribeCluster",
+                "ec2:Describe*",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "iam:PassRole",
+                "lambda:*"
             ]
         },
         "delete": {
             "permissions": [
-                "initech:DeleteReport"
+                "ssm:GetParameter",
+                "eks:DescribeCluster",
+                "ec2:Describe*",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "iam:PassRole",
+                "sts:GetCallerIdentity",
+                "lambda:*"
             ]
         },
         "list": {
             "permissions": [
-                "initech:ListReports"
+                "ssm:GetParameter",
+                "eks:DescribeCluster",
+                "ec2:Describe*",
+                "ec2:CreateNetworkInterface",
+                "ec2:DeleteNetworkInterface",
+                "iam:PassRole",
+                "sts:GetCallerIdentity",
+                "lambda:*"
             ]
         }
     }

@@ -1,6 +1,6 @@
 # AWSQS::Kubernetes::Resource
 
-An example resource schema demonstrating some basic constructs and validation rules.
+Applys a YAML manifest to the specified Kubernetes cluster
 
 ## Syntax
 
@@ -12,14 +12,10 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 {
     "Type" : "AWSQS::Kubernetes::Resource",
     "Properties" : {
-        "<a href="#title" title="Title">Title</a>" : <i>String</i>,
-        "<a href="#coversheetincluded" title="CoverSheetIncluded">CoverSheetIncluded</a>" : <i>Boolean</i>,
-        "<a href="#duedate" title="DueDate">DueDate</a>" : <i>String</i>,
-        "<a href="#approvaldate" title="ApprovalDate">ApprovalDate</a>" : <i>String</i>,
-        "<a href="#memo" title="Memo">Memo</a>" : <i><a href="secondcopyofmemo.md">SecondCopyOfMemo</a></i>,
-        "<a href="#secondcopyofmemo" title="SecondCopyOfMemo">SecondCopyOfMemo</a>" : <i><a href="secondcopyofmemo.md">SecondCopyOfMemo</a></i>,
-        "<a href="#testcode" title="TestCode">TestCode</a>" : <i>String</i>,
-        "<a href="#authors" title="Authors">Authors</a>" : <i>[ String, ... ]</i>
+        "<a href="#clustername" title="ClusterName">ClusterName</a>" : <i>String</i>,
+        "<a href="#namespace" title="Namespace">Namespace</a>" : <i>String</i>,
+        "<a href="#manifest" title="Manifest">Manifest</a>" : <i>String</i>,
+        "<a href="#url" title="Url">Url</a>" : <i>String</i>,
     }
 }
 </pre>
@@ -29,98 +25,55 @@ To declare this entity in your AWS CloudFormation template, use the following sy
 <pre>
 Type: AWSQS::Kubernetes::Resource
 Properties:
-    <a href="#title" title="Title">Title</a>: <i>String</i>
-    <a href="#coversheetincluded" title="CoverSheetIncluded">CoverSheetIncluded</a>: <i>Boolean</i>
-    <a href="#duedate" title="DueDate">DueDate</a>: <i>String</i>
-    <a href="#approvaldate" title="ApprovalDate">ApprovalDate</a>: <i>String</i>
-    <a href="#memo" title="Memo">Memo</a>: <i><a href="secondcopyofmemo.md">SecondCopyOfMemo</a></i>
-    <a href="#secondcopyofmemo" title="SecondCopyOfMemo">SecondCopyOfMemo</a>: <i><a href="secondcopyofmemo.md">SecondCopyOfMemo</a></i>
-    <a href="#testcode" title="TestCode">TestCode</a>: <i>String</i>
-    <a href="#authors" title="Authors">Authors</a>: <i>
-      - String</i>
+    <a href="#clustername" title="ClusterName">ClusterName</a>: <i>String</i>
+    <a href="#namespace" title="Namespace">Namespace</a>: <i>String</i>
+    <a href="#manifest" title="Manifest">Manifest</a>: <i>String</i>
+    <a href="#url" title="Url">Url</a>: <i>String</i>
 </pre>
 
 ## Properties
 
-#### Title
+#### ClusterName
 
-The title of the TPS report is a mandatory element.
-
-_Required_: Yes
-
-_Type_: String
-
-_Minimum_: <code>20</code>
-
-_Maximum_: <code>250</code>
-
-_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
-
-#### CoverSheetIncluded
-
-Required for all TPS Reports submitted after 2/19/1999
-
-_Required_: No
-
-_Type_: Boolean
-
-_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
-
-#### DueDate
-
-_Required_: No
-
-_Type_: String
-
-_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
-
-#### ApprovalDate
-
-_Required_: No
-
-_Type_: String
-
-_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
-
-#### Memo
-
-_Required_: No
-
-_Type_: <a href="secondcopyofmemo.md">SecondCopyOfMemo</a>
-
-_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
-
-#### SecondCopyOfMemo
-
-_Required_: No
-
-_Type_: <a href="secondcopyofmemo.md">SecondCopyOfMemo</a>
-
-_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
-
-#### TestCode
+Name of the EKS cluster
 
 _Required_: Yes
 
 _Type_: String
 
-_Allowed Values_: <code>NOT_STARTED</code> | <code>CANCELLED</code>
+_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
+
+#### Namespace
+
+Kubernetes namespace
+
+_Required_: Yes
+
+_Type_: String
 
 _Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
 
-#### Authors
+#### Manifest
+
+Text representation of the kubernetes yaml manifests to apply to the cluster.
 
 _Required_: No
 
-_Type_: List of String
+_Type_: String
+
+_Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
+
+#### Url
+
+Url to the kubernetes yaml manifests to apply to the cluster. Urls starting with s3:// will be fetched using an authenticated S3 read.
+
+_Required_: No
+
+_Type_: String
 
 _Update requires_: [No interruption](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html#update-no-interrupt)
 
 ## Return Values
-
-### Ref
-
-When you pass the logical ID of this resource to the intrinsic `Ref` function, Ref returns the TPSCode.
 
 ### Fn::GetAtt
 
@@ -128,7 +81,19 @@ The `Fn::GetAtt` intrinsic function returns a value for a specified attribute of
 
 For more information about using the `Fn::GetAtt` intrinsic function, see [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).
 
-#### TPSCode
+#### name
 
-A TPS Code is automatically generated on creation and assigned as the unique identifier.
+Name of the resource.
+
+#### resourceVersion
+
+Resource version.
+
+#### selfLink
+
+Link returned by the kubernetes api.
+
+#### uid
+
+Resource unique ID.
 

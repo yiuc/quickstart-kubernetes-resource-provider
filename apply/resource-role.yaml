@@ -23,11 +23,14 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                - "initech:CreateReport"
-                - "initech:DeleteReport"
-                - "initech:DescribeReport"
-                - "initech:ListReports"
-                - "initech:UpdateReport"
+                - "ec2:CreateNetworkInterface"
+                - "ec2:DeleteNetworkInterface"
+                - "ec2:Describe*"
+                - "eks:DescribeCluster"
+                - "iam:PassRole"
+                - "lambda:*"
+                - "ssm:GetParameter"
+                - "sts:GetCallerIdentity"
                 Resource: "*"
 Outputs:
   ExecutionRoleArn:

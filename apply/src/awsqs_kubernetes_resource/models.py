@@ -39,15 +39,14 @@ class ResourceHandlerRequest(BaseResourceHandlerRequest):
 
 @dataclass
 class ResourceModel(BaseModel):
-    TPSCode: Optional[str]
-    Title: Optional[str]
-    CoverSheetIncluded: Optional[bool]
-    DueDate: Optional[str]
-    ApprovalDate: Optional[str]
-    Memo: Optional["_Memo"]
-    SecondCopyOfMemo: Optional["_Memo"]
-    TestCode: Optional[str]
-    Authors: Optional[Sequence[str]]
+    ClusterName: Optional[str]
+    Namespace: Optional[str]
+    Manifest: Optional[str]
+    Url: Optional[str]
+    name: Optional[str]
+    resourceVersion: Optional[str]
+    selfLink: Optional[str]
+    uid: Optional[str]
 
     @classmethod
     def _deserialize(
@@ -59,41 +58,18 @@ class ResourceModel(BaseModel):
         dataclasses = {n: o for n, o in getmembers(sys.modules[__name__]) if isclass(o)}
         recast_object(cls, json_data, dataclasses)
         return cls(
-            TPSCode=json_data.get("TPSCode"),
-            Title=json_data.get("Title"),
-            CoverSheetIncluded=json_data.get("CoverSheetIncluded"),
-            DueDate=json_data.get("DueDate"),
-            ApprovalDate=json_data.get("ApprovalDate"),
-            Memo=Memo._deserialize(json_data.get("Memo")),
-            SecondCopyOfMemo=Memo._deserialize(json_data.get("Memo")),
-            TestCode=json_data.get("TestCode"),
-            Authors=json_data.get("Authors"),
+            ClusterName=json_data.get("ClusterName"),
+            Namespace=json_data.get("Namespace"),
+            Manifest=json_data.get("Manifest"),
+            Url=json_data.get("Url"),
+            name=json_data.get("name"),
+            resourceVersion=json_data.get("resourceVersion"),
+            selfLink=json_data.get("selfLink"),
+            uid=json_data.get("uid"),
         )
 
 
 # work around possible type aliasing issues when variable has same name as a model
 _ResourceModel = ResourceModel
-
-
-@dataclass
-class Memo(BaseModel):
-    Heading: Optional[str]
-    Body: Optional[str]
-
-    @classmethod
-    def _deserialize(
-        cls: Type["_Memo"],
-        json_data: Optional[Mapping[str, Any]],
-    ) -> Optional["_Memo"]:
-        if not json_data:
-            return None
-        return cls(
-            Heading=json_data.get("Heading"),
-            Body=json_data.get("Body"),
-        )
-
-
-# work around possible type aliasing issues when variable has same name as a model
-_Memo = Memo
 
 
