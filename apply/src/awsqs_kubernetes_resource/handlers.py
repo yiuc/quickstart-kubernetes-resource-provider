@@ -55,10 +55,10 @@ def create_handler(
             return progress
     outp = run_command("kubectl create --save-config -o json -f %s -n %s" % (manifest_file, model.Namespace), model.ClusterName, session)
     build_model(json.loads(outp), model)
-    if model.selfLink.startswith('/apis/batch'):
-        if not stabilize_job(model.Namespace, model.name, model.ClusterName, session):
-            callback_context['stabilizing'] = model.selfLink
-            callback_context['name'] = model.name
+    if model.SelfLink.startswith('/apis/batch'):
+        if not stabilize_job(model.Namespace, model.Name, model.ClusterName, session):
+            callback_context['stabilizing'] = model.SelfLink
+            callback_context['name'] = model.Name
             progress.callbackContext = callback_context
             progress.callbackDelaySeconds = 30
             return progress
@@ -87,10 +87,10 @@ def update_handler(
             return progress
     outp = run_command("kubectl apply -o json -f %s -n %s" % (manifest_file, model.Namespace), model.ClusterName, session)
     build_model(json.loads(outp), model)
-    if model.selfLink.startswith('/apis/batch'):
-        if not stabilize_job(model.Namespace, model.name):
-            callback_context['stabilizing'] = model.selfLink
-            callback_context['name'] = model.name
+    if model.SelfLink.startswith('/apis/batch'):
+        if not stabilize_job(model.Namespace, model.Name):
+            callback_context['stabilizing'] = model.SelfLink
+            callback_context['name'] = model.Name
             progress.callbackContext = callback_context
             progress.callbackDelaySeconds = 30
             return progress
@@ -123,7 +123,7 @@ def read_handler(
     model = request.desiredResourceState
     if not proxy_needed(model.ClusterName, session):
         create_kubeconfig(model.ClusterName)
-    namespace, kind, name = tuple(model.selfLink.split('/')[-3:])
+    namespace, kind, name = tuple(model.SelfLink.split('/')[-3:])
     outp = run_command(f"kubectl get {kind}/{name} -n {namespace} -o json", model.ClusterName, session)
     build_model(json.loads(outp), model)
     return ProgressEvent(
@@ -227,7 +227,7 @@ def generate_name(model, physical_resource_id, stack_name):
 def build_model(kube_response, model):
     for key in ["uid", "selfLink", "resourceVersion", "namespace", "name"]:
         if key in kube_response["metadata"].keys():
-            setattr(model, key, kube_response["metadata"][key])
+            setattr(model, key[0].capitalize() + key[1:], kube_response["metadata"][key])
 
 
 def handler_init(model, session, stack_name):

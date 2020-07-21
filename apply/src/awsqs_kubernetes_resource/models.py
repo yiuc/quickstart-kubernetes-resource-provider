@@ -43,10 +43,10 @@ class ResourceModel(BaseModel):
     Namespace: Optional[str]
     Manifest: Optional[str]
     Url: Optional[str]
-    name: Optional[str]
-    resourceVersion: Optional[str]
-    selfLink: Optional[str]
-    uid: Optional[str]
+    Name: Optional[str]
+    ResourceVersion: Optional[str]
+    SelfLink: Optional[str]
+    Uid: Optional[str]
 
     @classmethod
     def _deserialize(
@@ -62,10 +62,10 @@ class ResourceModel(BaseModel):
             Namespace=json_data.get("Namespace"),
             Manifest=json_data.get("Manifest"),
             Url=json_data.get("Url"),
-            name=json_data.get("name"),
-            resourceVersion=json_data.get("resourceVersion"),
-            selfLink=json_data.get("selfLink"),
-            uid=json_data.get("uid"),
+            Name=json_data.get("Name"),
+            ResourceVersion=json_data.get("ResourceVersion"),
+            SelfLink=json_data.get("SelfLink"),
+            Uid=json_data.get("Uid"),
         )
 
 
