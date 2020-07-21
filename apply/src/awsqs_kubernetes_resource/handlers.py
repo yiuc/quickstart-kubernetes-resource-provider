@@ -47,7 +47,7 @@ def create_handler(
     )
     physical_resource_id,  manifest_file = handler_init(model, session, request.logicalResourceIdentifier)
     if 'stabilizing' in callback_context:
-        if callback_context['stabilizing'].startswith('/apis/batch'):
+        if callback_context['stabilizing'].startswith('/apis/batch') and 'cronjobs' not in callback_context['stabilizing']:
             if stabilize_job(model.Namespace, callback_context['name'], model.ClusterName, session):
                 progress.status = OperationStatus.SUCCESS
             progress.callbackContext = callback_context
