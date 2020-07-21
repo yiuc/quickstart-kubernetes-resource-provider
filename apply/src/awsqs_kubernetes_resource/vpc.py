@@ -47,8 +47,8 @@ def proxy_call(cluster_name, manifest, command, sess):
     }
     resp = invoke_function(f'awsqs-kubernetes-resource-apply-proxy-{cluster_name}', event, sess)
     if 'errorMessage' in resp:
-        LOG.error(f'{resp["errorType"]}: {resp["errorMessage"]}')
-        LOG.error(f'{resp["stackTrace"]}')
+        LOG.error(f'Code: {resp.get("errorType")} Message: {resp.get("errorMessage")}')
+        LOG.error(f'StackTrace: {resp.get("stackTrace")}')
         raise Exception(f'{resp["errorType"]}: {resp["errorMessage"]}')
     return resp
 

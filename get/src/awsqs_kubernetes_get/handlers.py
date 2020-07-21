@@ -57,9 +57,9 @@ def kubectl_get(model: ResourceModel, sess) -> ProgressEvent    :
         resp = proxy_call(model._serialize(), sess)
         LOG.info(resp)
         if 'errorMessage' in resp:
-            LOG.error(f'{resp["errorType"]}: {resp["errorMessage"]}')
-            LOG.error(f'{resp["stackTrace"]}')
-            raise Exception(f'{resp["errorType"]}: {resp["errorMessage"]}')
+            LOG.error(f'Code: {resp.get("errorType")} Message: {resp.get("errorMessage")}')
+            LOG.error(f'StackTrace: {resp.get("stackTrace")}')
+            raise Exception(f'{resp.get("errorType")}: {resp.get("errorMessage")}')
         return ProgressEvent(
             status=OperationStatus.SUCCESS,
             resourceModel=ResourceModel._deserialize(resp)
