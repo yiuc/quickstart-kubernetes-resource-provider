@@ -17,8 +17,9 @@ LOG = logging.getLogger(__name__)
 def proxy_needed(cluster_name: str, boto3_session: boto3.Session) -> (boto3.client, str):
     eks = boto3_session.client('eks')
     eks_vpc_config = eks.describe_cluster(name=cluster_name)['cluster']['resourcesVpcConfig']
-    if eks_vpc_config['endpointPublicAccess'] and '0.0.0.0/0' in eks_vpc_config['publicAccessCidrs']:
-        return False
+    # for now we will always use vpc proxy, until we can work out how to wrap boto3 session in CFN registry when authing
+    # if eks_vpc_config['endpointPublicAccess'] and '0.0.0.0/0' in eks_vpc_config['publicAccessCidrs']:
+    #    return False
     if this_invoke_is_inside_vpc(set(eks_vpc_config['subnetIds']), set(eks_vpc_config['securityGroupIds'])):
         return False
     return True
