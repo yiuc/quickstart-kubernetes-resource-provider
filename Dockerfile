@@ -7,8 +7,10 @@ COPY . /build
 WORKDIR /build
 
 RUN pip3 install -t get/src --upgrade -r get/requirements.txt && \
-    find get/src -name __pycache__ | xargs rm -rf && \
-    rm -rf get/src/*.dist-info get/src/*.pth && \
+    find . -name "*.dist-info"  -exec rm -rf {} \; | true && \
+    find . -name "*.egg-info"  -exec rm -rf {} \; | true && \
+    find . -name "*.pth"  -exec rm -rf {} \; | true && \
+    find . -name "__pycache__"  -exec rm -rf {} \; | true && \
     curl -o get/src/bin/kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/${VERSION}/bin/linux/amd64/kubectl && \
     curl -o get/src/bin/aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/${VERSION}/bin/linux/amd64/aws-iam-authenticator && \
     chmod +x get/src/bin/kubectl && \
@@ -27,8 +29,10 @@ RUN cd get/src && zip -r -q ../ResourceProvider.zip ./ && \
     zip -X -r -q ../awsqs_kubernetes_get.zip ./ResourceProvider.zip .rpdk-config schema.json
 
 RUN pip3 install -t apply/src --upgrade -r apply/requirements.txt && \
-    find apply/src -name __pycache__ | xargs rm -rf && \
-    rm -rf apply/src/*.dist-info apply/src/*.pth && \
+    find . -name "*.dist-info"  -exec rm -rf {} \; | true && \
+    find . -name "*.egg-info"  -exec rm -rf {} \; | true && \
+    find . -name "*.pth"  -exec rm -rf {} \; | true && \
+    find . -name "__pycache__"  -exec rm -rf {} \; | true && \
     cp -p get/src/bin/kubectl apply/src/bin/ && \
     cp -p get/src/bin/aws-iam-authenticator apply/src/bin/
 
