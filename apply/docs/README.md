@@ -81,19 +81,19 @@ The `Fn::GetAtt` intrinsic function returns a value for a specified attribute of
 
 For more information about using the `Fn::GetAtt` intrinsic function, see [Fn::GetAtt](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-getatt.html).
 
-#### name
+#### Name
 
 Name of the resource.
 
-#### resourceVersion
+#### ResourceVersion
 
 Resource version.
 
-#### selfLink
+#### SelfLink
 
 Link returned by the kubernetes api.
 
-#### uid
+#### Uid
 
 Resource unique ID.
 

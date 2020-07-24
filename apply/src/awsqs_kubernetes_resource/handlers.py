@@ -242,8 +242,8 @@ def handler_init(model, session, stack_name):
         raise Exception("Either Manifest or Url must be specified.")
     if model.Manifest:
         manifest_file = '/tmp/manifest.json'
-        if model.selfLink:
-            physical_resource_id = model.selfLink
+        if model.SelfLink:
+            physical_resource_id = model.SelfLink
         manifest = generate_name(model, physical_resource_id, stack_name)
         write_manifest(manifest, manifest_file)
         LOG.debug("Applying manifest: %s" % json.dumps(manifest, default=json_serial))
