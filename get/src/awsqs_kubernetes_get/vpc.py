@@ -7,11 +7,15 @@ import json
 import logging
 import shutil
 import time
+from pathlib import Path
 
 LOG = logging.getLogger(__name__)
 
 
 def proxy_needed(cluster_name: str, boto3_session: boto3.Session) -> (boto3.client, str):
+    # If there's no vpc zip then we're already in the inner lambda.
+    if not Path('./awsqs_kubernetes_get/vpc.zip').resolve().exists():
+        return False
     eks = boto3_session.client('eks')
     eks_vpc_config = eks.describe_cluster(name=cluster_name)['cluster']['resourcesVpcConfig']
     # for now we will always use vpc proxy, until we can work out how to wrap boto3 session in CFN registry when authing
