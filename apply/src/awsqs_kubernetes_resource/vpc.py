@@ -96,18 +96,26 @@ def put_function(sess, cluster_name):
                 FunctionName=f'awsqs-kubernetes-resource-apply-proxy-{cluster_name}',
                 ZipFile=zip_file.read()
             )
-        lmbd.update_function_configuration(
-            FunctionName=f'awsqs-kubernetes-resource-apply-proxy-{cluster_name}',
-            Runtime='python3.7',
-            Role=role_arn,
-            Handler="awsqs_kubernetes_resource.handlers.proxy_wrap",
-            Timeout=900,
-            MemorySize=512,
-            VpcConfig={
-                'SubnetIds': internal_subnets,
-                'SecurityGroupIds': eks_vpc_config['securityGroupIds']
-            }
-        )
+        while True:
+            try:
+                lmbd.update_function_configuration(
+                    FunctionName=f'awsqs-kubernetes-resource-apply-proxy-{cluster_name}',
+                    Runtime='python3.7',
+                    Role=role_arn,
+                    Handler="awsqs_kubernetes_resource.handlers.proxy_wrap",
+                    Timeout=900,
+                    MemorySize=512,
+                    VpcConfig={
+                        'SubnetIds': internal_subnets,
+                        'SecurityGroupIds': eks_vpc_config['securityGroupIds']
+                    }
+                )
+                break
+            except lmbd.exceptions.ResourceConflictException as e:
+                if "The operation cannot be performed at this time." not in str(e):
+                    raise
+                LOG.error(str(e))
+                time.sleep(10)
 
 
 def invoke_function(func_arn, event, sess):
