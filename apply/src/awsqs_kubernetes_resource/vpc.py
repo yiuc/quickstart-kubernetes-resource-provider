@@ -95,11 +95,19 @@ def put_function(sess, cluster_name):
         if "Function already exist" not in str(e):
             raise
         LOG.warning("function already exists...")
-        with open('./awsqs_kubernetes_resource/vpc.zip', 'rb') as zip_file:
-            lmbd.update_function_code(
-                FunctionName=f'awsqs-kubernetes-resource-apply-proxy-{cluster_name}',
-                ZipFile=zip_file.read()
-            )
+        while True:
+            try:
+                with open('./awsqs_kubernetes_resource/vpc.zip', 'rb') as zip_file:
+                    lmbd.update_function_code(
+                        FunctionName=f'awsqs-kubernetes-resource-apply-proxy-{cluster_name}',
+                        ZipFile=zip_file.read()
+                    )
+                break
+            except lmbd.exceptions.ResourceConflictException as e:
+                if "The operation cannot be performed at this time." not in str(e):
+                    raise
+                LOG.error(str(e))
+                time.sleep(10)
         while True:
             try:
                 lmbd.update_function_configuration(
