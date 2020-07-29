@@ -110,7 +110,11 @@ def delete_handler(
         resourceModel=model,
     )
     physical_resource_id, manifest_file = handler_init(model, session, request.logicalResourceIdentifier)
-    run_command("kubectl delete -f %s -n %s" % (manifest_file, model.Namespace), model.ClusterName, session)
+    try:
+        run_command("kubectl delete -f %s -n %s" % (manifest_file, model.Namespace), model.ClusterName, session)
+    except Exception as e:
+        if "Error from server (NotFound)" not in str(e):
+            raise
     return progress
 
 
