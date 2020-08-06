@@ -124,10 +124,9 @@ def put_function(sess, cluster_name):
                 )
                 break
             except lmbd.exceptions.ResourceConflictException as e:
-                if "The operation cannot be performed at this time." not in str(e):
+                if "The operation cannot be performed at this time." not in str(e) and "The function could not be updated due to a concurrent update operation." not in str(e):
                     raise
-                LOG.error(str(e))
-                time.sleep(10)
+                break
 
 
 def invoke_function(func_arn, event, sess):
