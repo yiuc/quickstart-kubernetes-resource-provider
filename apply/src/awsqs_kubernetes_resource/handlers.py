@@ -45,6 +45,7 @@ def create_handler(
         status=OperationStatus.IN_PROGRESS,
         resourceModel=model,
     )
+    LOG.debug(f"Create invoke \n\n{request.__dict__}\n\n{callback_context}")
     physical_resource_id,  manifest_file = handler_init(model, session, request.logicalResourceIdentifier)
     if 'stabilizing' in callback_context:
         if callback_context['stabilizing'].startswith('/apis/batch') and 'cronjobs' not in callback_context['stabilizing']:
