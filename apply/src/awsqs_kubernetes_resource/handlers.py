@@ -56,12 +56,11 @@ def create_handler(
     outp = run_command("kubectl create --save-config -o json -f %s -n %s" % (manifest_file, model.Namespace), model.ClusterName, session)
     build_model(json.loads(outp), model)
     if model.SelfLink.startswith('/apis/batch') and 'cronjobs' not in model.SelfLink:
-        if not stabilize_job(model.Namespace, model.Name, model.ClusterName, session):
-            callback_context['stabilizing'] = model.SelfLink
-            callback_context['name'] = model.Name
-            progress.callbackContext = callback_context
-            progress.callbackDelaySeconds = 30
-            return progress
+        callback_context['stabilizing'] = model.SelfLink
+        callback_context['name'] = model.Name
+        progress.callbackContext = callback_context
+        progress.callbackDelaySeconds = 30
+        return progress
     progress.status = OperationStatus.SUCCESS
     return progress
 
@@ -88,12 +87,11 @@ def update_handler(
     outp = run_command("kubectl apply -o json -f %s -n %s" % (manifest_file, model.Namespace), model.ClusterName, session)
     build_model(json.loads(outp), model)
     if model.SelfLink.startswith('/apis/batch') and 'cronjobs' not in model.SelfLink:
-        if not stabilize_job(model.Namespace, model.Name):
-            callback_context['stabilizing'] = model.SelfLink
-            callback_context['name'] = model.Name
-            progress.callbackContext = callback_context
-            progress.callbackDelaySeconds = 30
-            return progress
+        callback_context['stabilizing'] = model.SelfLink
+        callback_context['name'] = model.Name
+        progress.callbackContext = callback_context
+        progress.callbackDelaySeconds = 30
+        return progress
     progress.status = OperationStatus.SUCCESS
     return progress
 
