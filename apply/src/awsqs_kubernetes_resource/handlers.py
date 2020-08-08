@@ -55,7 +55,7 @@ def create_handler(
             return progress
     outp = run_command("kubectl create --save-config -o json -f %s -n %s" % (manifest_file, model.Namespace), model.ClusterName, session)
     build_model(json.loads(outp), model)
-    if model.SelfLink.startswith('/apis/batch'):
+    if model.SelfLink.startswith('/apis/batch') and 'cronjobs' not in model.SelfLink:
         if not stabilize_job(model.Namespace, model.Name, model.ClusterName, session):
             callback_context['stabilizing'] = model.SelfLink
             callback_context['name'] = model.Name
@@ -79,7 +79,7 @@ def update_handler(
     )
     physical_resource_id, manifest_file = handler_init(model, session, request.logicalResourceIdentifier)
     if 'stabilizing' in callback_context:
-        if callback_context['stabilizing'].startswith('/apis/batch'):
+        if callback_context['stabilizing'].startswith('/apis/batch') and 'cronjobs' not in callback_context['stabilizing']:
             if stabilize_job(model.Namespace, callback_context['name']):
                 progress.status = OperationStatus.SUCCESS
             progress.callbackContext = callback_context
@@ -87,7 +87,7 @@ def update_handler(
             return progress
     outp = run_command("kubectl apply -o json -f %s -n %s" % (manifest_file, model.Namespace), model.ClusterName, session)
     build_model(json.loads(outp), model)
-    if model.SelfLink.startswith('/apis/batch'):
+    if model.SelfLink.startswith('/apis/batch') and 'cronjobs' not in model.SelfLink:
         if not stabilize_job(model.Namespace, model.Name):
             callback_context['stabilizing'] = model.SelfLink
             callback_context['name'] = model.Name
