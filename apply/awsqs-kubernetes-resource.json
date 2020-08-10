@@ -34,6 +34,10 @@
         "Uid": {
             "type":"string",
             "description": "Resource unique ID."
+        },
+        "CfnId": {
+             "type":"string",
+            "description": "CloudFormation Physical ID."
         }
     },
     "additionalProperties": false,
@@ -45,11 +49,12 @@
         "/properties/Name",
         "/properties/ResourceVersion",
         "/properties/SelfLink",
-        "/properties/Uid"
+        "/properties/Uid",
+        "/properties/CfnId"
     ],
     "primaryIdentifier": [
         "/properties/ClusterName",
-        "/properties/SelfLink"
+        "/properties/CfnId"
     ],
     "handlers": {
         "create": {

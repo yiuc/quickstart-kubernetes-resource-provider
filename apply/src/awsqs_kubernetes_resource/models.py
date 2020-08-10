@@ -47,6 +47,7 @@ class ResourceModel(BaseModel):
     ResourceVersion: Optional[str]
     SelfLink: Optional[str]
     Uid: Optional[str]
+    CfnId: Optional[str]
 
     @classmethod
     def _deserialize(
@@ -66,6 +67,7 @@ class ResourceModel(BaseModel):
             ResourceVersion=json_data.get("ResourceVersion"),
             SelfLink=json_data.get("SelfLink"),
             Uid=json_data.get("Uid"),
+            CfnId=json_data.get("CfnId"),
         )
 
 

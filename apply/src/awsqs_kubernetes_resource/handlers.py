@@ -9,6 +9,7 @@ from ruamel import yaml
 from datetime import date, datetime
 from time import sleep
 import os
+import base64
 
 import boto3
 
@@ -18,6 +19,7 @@ from cloudformation_cli_python_lib import (
     ProgressEvent,
     Resource,
     SessionProxy,
+    exceptions,
 )
 
 from .models import ResourceHandlerRequest, ResourceModel
@@ -46,23 +48,39 @@ def create_handler(
         resourceModel=model,
     )
     LOG.debug(f"Create invoke \n\n{request.__dict__}\n\n{callback_context}")
-    physical_resource_id,  manifest_file = handler_init(model, session, request.logicalResourceIdentifier)
+    physical_resource_id,  manifest_file, manifest_dict = handler_init(model, session, request.logicalResourceIdentifier, request.clientRequestToken)
+    model.CfnId = encode_id(request.clientRequestToken, model.ClusterName, model.Namespace, manifest_dict['kind'])
+    if not callback_context:
+        LOG.debug("1st invoke")
+        progress.callbackDelaySeconds = 1
+        progress.callbackContext = {"init": "complete"}
+        return progress
     if 'stabilizing' in callback_context:
         if callback_context['stabilizing'].startswith('/apis/batch') and 'cronjobs' not in callback_context['stabilizing']:
             if stabilize_job(model.Namespace, callback_context['name'], model.ClusterName, session):
                 progress.status = OperationStatus.SUCCESS
             progress.callbackContext = callback_context
             progress.callbackDelaySeconds = 30
+            LOG.debug(f"stabilizing: {progress.__dict__}")
             return progress
-    outp = run_command("kubectl create --save-config -o json -f %s -n %s" % (manifest_file, model.Namespace), model.ClusterName, session)
-    build_model(json.loads(outp), model)
+    try:
+        outp = run_command("kubectl create --save-config -o json -f %s -n %s" % (manifest_file, model.Namespace), model.ClusterName, session)
+        build_model(json.loads(outp), model)
+    except Exception as e:
+        if "Error from server (AlreadyExists)" not in str(e):
+            raise
+        LOG.debug("checking whether this is a duplicate request....")
+        if not get_model(model, session):
+            raise exceptions.AlreadyExists(TYPE_NAME, model.CfnId)
     if model.SelfLink.startswith('/apis/batch') and 'cronjobs' not in model.SelfLink:
         callback_context['stabilizing'] = model.SelfLink
         callback_context['name'] = model.Name
         progress.callbackContext = callback_context
         progress.callbackDelaySeconds = 30
+        LOG.debug(f"need to stabilize: {progress.__dict__}")
         return progress
     progress.status = OperationStatus.SUCCESS
+    LOG.debug(f"success {progress.__dict__}")
     return progress
 
 
@@ -73,14 +91,19 @@ def update_handler(
     callback_context: MutableMapping[str, Any],
 ) -> ProgressEvent:
     model = request.desiredResourceState
+    old_model = request.previousResourceState
     progress: ProgressEvent = ProgressEvent(
         status=OperationStatus.IN_PROGRESS,
         resourceModel=model,
     )
-    physical_resource_id, manifest_file = handler_init(model, session, request.logicalResourceIdentifier)
+    token, cluster_name, namespace, kind = decode_id(model.CfnId)
+    _, __, old_manifest_dict = handler_init(old_model, session, request.logicalResourceIdentifier, token)
+    _, manifest_file, manifest_dict = handler_init(model, session, request.logicalResourceIdentifier, token)
+    if old_manifest_dict['kind'] != manifest_dict['kind'] or old_model.Namespace != model.Namespace:
+        return create_handler(session, request, callback_context)
     if 'stabilizing' in callback_context:
         if callback_context['stabilizing'].startswith('/apis/batch') and 'cronjobs' not in callback_context['stabilizing']:
-            if stabilize_job(model.Namespace, callback_context['name']):
+            if stabilize_job(model.Namespace, callback_context['name'], model.ClusterName, session):
                 progress.status = OperationStatus.SUCCESS
             progress.callbackContext = callback_context
             progress.callbackDelaySeconds = 30
@@ -108,7 +131,7 @@ def delete_handler(
         status=OperationStatus.SUCCESS,
         resourceModel=model,
     )
-    physical_resource_id, manifest_file = handler_init(model, session, request.logicalResourceIdentifier)
+    _, manifest_file, __ = handler_init(model, session, request.logicalResourceIdentifier, request.clientRequestToken)
     try:
         run_command("kubectl delete -f %s -n %s" % (manifest_file, model.Namespace), model.ClusterName, session)
     except Exception as e:
@@ -126,9 +149,8 @@ def read_handler(
     model = request.desiredResourceState
     if not proxy_needed(model.ClusterName, session):
         create_kubeconfig(model.ClusterName)
-    namespace, kind, name = tuple(model.SelfLink.split('/')[-3:])
-    outp = run_command(f"kubectl get {kind}/{name} -n {namespace} -o json", model.ClusterName, session)
-    build_model(json.loads(outp), model)
+    if not get_model(model, session):
+        raise exceptions.NotFound(TYPE_NAME, model.Uid)
     return ProgressEvent(
         status=OperationStatus.SUCCESS,
         resourceModel=model,
@@ -233,7 +255,7 @@ def build_model(kube_response, model):
             setattr(model, key[0].capitalize() + key[1:], kube_response["metadata"][key])
 
 
-def handler_init(model, session, stack_name):
+def handler_init(model, session, stack_name, token):
     LOG.debug('Received model: %s' % json.dumps(model._serialize(), default=json_serial))
 
     physical_resource_id = None
@@ -248,8 +270,6 @@ def handler_init(model, session, stack_name):
         if model.SelfLink:
             physical_resource_id = model.SelfLink
         manifest = generate_name(model, physical_resource_id, stack_name)
-        write_manifest(manifest, manifest_file)
-        LOG.debug("Applying manifest: %s" % json.dumps(manifest, default=json_serial))
     elif model.Url:
         manifest_file = '/tmp/manifest.json'
         if re.match(s3_scheme, model.Url):
@@ -257,8 +277,17 @@ def handler_init(model, session, stack_name):
         else:
             response = http_get(model.Url)
         manifest = yaml.safe_load(response)
-        write_manifest(manifest, manifest_file)
-    return physical_resource_id, manifest_file
+    add_idempotency_token(manifest, token)
+    write_manifest(manifest, manifest_file)
+    return physical_resource_id, manifest_file, manifest
+
+
+def add_idempotency_token(manifest, token):
+    if 'metadata' not in manifest:
+        manifest['metadata'] = {}
+    if 'annotations' not in manifest:
+        manifest['metadata']['annotations'] = {}
+    manifest['metadata']['annotations']['cfn-client-token'] = token
 
 
 def stabilize_job(namespace, name, cluster_name, session):
@@ -278,3 +307,21 @@ def proxy_wrap(event, _context):
         write_manifest(event['manifest'], '/tmp/manifest.json')
     create_kubeconfig(event['cluster_name'])
     return run_command(event['command'], event['cluster_name'], boto3.session.Session())
+
+
+def encode_id(client_token, cluster_name, namespace, kind):
+    return base64.b64encode(f'{client_token}|{cluster_name}|{namespace}|{kind}'.encode('utf-8')).decode('utf-8')
+
+
+def decode_id(encoded_id):
+    return tuple(base64.b64decode(encoded_id).decode('utf-8').split('|'))
+
+
+def get_model(model, session):
+    token, cluster, namespace, kind = decode_id(model.CfnId)
+    outp = run_command(f"kubectl get {kind} -n {namespace} -o json", cluster, session)
+    for i in json.loads(outp)['items']:
+        if token == i.get('metadata', {}).get('annotations', {}).get('cfn-client-token'):
+            build_model(i, model)
+            return model
+    return None
