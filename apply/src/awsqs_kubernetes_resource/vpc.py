@@ -6,52 +6,59 @@ from random import choice
 import json
 import logging
 import time
-
+from typing import Optional, Union
 from pathlib import Path
-from cloudformation_cli_python_lib import ProgressEvent
-from .models import ResourceModel
+from cloudformation_cli_python_lib import SessionProxy
 
 
 LOG = logging.getLogger(__name__)
 
 
-def proxy_needed(cluster_name: str, boto3_session: boto3.Session) -> (boto3.client, str):
+def proxy_needed(
+    cluster_name: str, boto3_session: Optional[Union[boto3.Session, SessionProxy]]
+) -> (boto3.client, str):
     # If there's no vpc zip then we're already in the inner lambda.
-    if not Path('./awsqs_kubernetes_resource/vpc.zip').resolve().exists():
+    if not Path("./awsqs_kubernetes_resource/vpc.zip").resolve().exists():
         return False
-    eks = boto3_session.client('eks')
-    eks_vpc_config = eks.describe_cluster(name=cluster_name)['cluster']['resourcesVpcConfig']
+    eks = boto3_session.client("eks")
+    eks_vpc_config = eks.describe_cluster(name=cluster_name)["cluster"][
+        "resourcesVpcConfig"
+    ]
     # for now we will always use vpc proxy, until we can work out how to wrap boto3 session in CFN registry when authing
     # if eks_vpc_config['endpointPublicAccess'] and '0.0.0.0/0' in eks_vpc_config['publicAccessCidrs']:
     #    return False
-    if this_invoke_is_inside_vpc(set(eks_vpc_config['subnetIds']), set(eks_vpc_config['securityGroupIds'])):
+    if this_invoke_is_inside_vpc(
+        set(eks_vpc_config["subnetIds"]), set(eks_vpc_config["securityGroupIds"])
+    ):
         return False
     return True
 
 
 def this_invoke_is_inside_vpc(subnet_ids: set, sg_ids: set) -> bool:
-    lmbd = boto3.client('lambda')
+    lmbd = boto3.client("lambda")
     try:
-        lambda_config = lmbd.get_function_configuration(FunctionName=os.environ['AWS_LAMBDA_FUNCTION_NAME'])
-        l_vpc_id = lambda_config['VpcConfig'].get('VpcId', '')
-        l_subnet_ids = set(lambda_config['VpcConfig'].get('subnetIds', ''))
-        l_sg_ids = set(lambda_config['VpcConfig'].get('securityGroupIds', ''))
+        lambda_config = lmbd.get_function_configuration(
+            FunctionName=os.environ["AWS_LAMBDA_FUNCTION_NAME"]
+        )
+        l_vpc_id = lambda_config["VpcConfig"].get("VpcId", "")
+        l_subnet_ids = set(lambda_config["VpcConfig"].get("subnetIds", ""))
+        l_sg_ids = set(lambda_config["VpcConfig"].get("securityGroupIds", ""))
         if l_vpc_id and l_subnet_ids.issubset(subnet_ids) and l_sg_ids.issubset(sg_ids):
             return True
-    except Exception as e:
-        print(f'failed to get function config for {os.environ["AWS_LAMBDA_FUNCTION_NAME"]}')
+    except Exception:
+        print(
+            f'failed to get function config for {os.environ["AWS_LAMBDA_FUNCTION_NAME"]}'
+        )
         traceback.print_exc()
     return False
 
 
 def proxy_call(cluster_name, manifest, command, sess):
-    event = {
-        "cluster_name": cluster_name,
-        "manifest": manifest,
-        "command": command
-    }
-    resp = invoke_function(f'awsqs-kubernetes-resource-apply-proxy-{cluster_name}', event, sess)
-    if 'errorMessage' in resp:
+    event = {"cluster_name": cluster_name, "manifest": manifest, "command": command}
+    resp = invoke_function(
+        f"awsqs-kubernetes-resource-apply-proxy-{cluster_name}", event, sess
+    )
+    if "errorMessage" in resp:
         LOG.error(f'Code: {resp.get("errorType")} Message: {resp.get("errorMessage")}')
         LOG.error(f'StackTrace: {resp.get("stackTrace")}')
         raise Exception(f'{resp["errorType"]}: {resp["errorMessage"]}')
@@ -59,37 +66,46 @@ def proxy_call(cluster_name, manifest, command, sess):
 
 
 def random_string(length=8):
-    return ''.join(choice(ascii_lowercase) for _ in range(length))
+    return "".join(choice(ascii_lowercase) for _ in range(length))
 
 
 def put_function(sess, cluster_name):
-    eks = sess.client('eks')
-    eks_vpc_config = eks.describe_cluster(name=cluster_name)['cluster']['resourcesVpcConfig']
-    ec2 = sess.client('ec2')
-    internal_subnets = [
-        s['SubnetId'] for s in
-        ec2.describe_subnets(SubnetIds=eks_vpc_config['subnetIds'], Filters=[
-            {'Name': "tag-key", "Values": ['kubernetes.io/role/internal-elb']}
-        ])['Subnets']
+    eks = sess.client("eks")
+    eks_vpc_config = eks.describe_cluster(name=cluster_name)["cluster"][
+        "resourcesVpcConfig"
     ]
-    sts = sess.client('sts')
-    role_arn = '/'.join(sts.get_caller_identity()['Arn'].replace(':sts:', ':iam:').replace(':assumed-role/', ':role/')
-                        .split('/')[:-1])
-    lmbd = sess.client('lambda')
+    ec2 = sess.client("ec2")
+    internal_subnets = [
+        s["SubnetId"]
+        for s in ec2.describe_subnets(
+            SubnetIds=eks_vpc_config["subnetIds"],
+            Filters=[
+                {"Name": "tag-key", "Values": ["kubernetes.io/role/internal-elb"]}
+            ],
+        )["Subnets"]
+    ]
+    sts = sess.client("sts")
+    role_arn = "/".join(
+        sts.get_caller_identity()["Arn"]
+        .replace(":sts:", ":iam:")
+        .replace(":assumed-role/", ":role/")
+        .split("/")[:-1]
+    )
+    lmbd = sess.client("lambda")
     try:
-        with open('./awsqs_kubernetes_resource/vpc.zip', 'rb') as zip_file:
+        with open("./awsqs_kubernetes_resource/vpc.zip", "rb") as zip_file:
             lmbd.create_function(
-                FunctionName=f'awsqs-kubernetes-resource-apply-proxy-{cluster_name}',
-                Runtime='python3.7',
+                FunctionName=f"awsqs-kubernetes-resource-apply-proxy-{cluster_name}",
+                Runtime="python3.7",
                 Role=role_arn,
                 Handler="awsqs_kubernetes_resource.handlers.proxy_wrap",
-                Code={'ZipFile': zip_file.read()},
+                Code={"ZipFile": zip_file.read()},
                 Timeout=900,
                 MemorySize=512,
                 VpcConfig={
-                    'SubnetIds': internal_subnets,
-                    'SecurityGroupIds': eks_vpc_config['securityGroupIds']
-                }
+                    "SubnetIds": internal_subnets,
+                    "SecurityGroupIds": eks_vpc_config["securityGroupIds"],
+                },
             )
     except lmbd.exceptions.ResourceConflictException as e:
         if "Function already exist" not in str(e):
@@ -97,10 +113,10 @@ def put_function(sess, cluster_name):
         LOG.warning("function already exists...")
         while True:
             try:
-                with open('./awsqs_kubernetes_resource/vpc.zip', 'rb') as zip_file:
+                with open("./awsqs_kubernetes_resource/vpc.zip", "rb") as zip_file:
                     lmbd.update_function_code(
-                        FunctionName=f'awsqs-kubernetes-resource-apply-proxy-{cluster_name}',
-                        ZipFile=zip_file.read()
+                        FunctionName=f"awsqs-kubernetes-resource-apply-proxy-{cluster_name}",
+                        ZipFile=zip_file.read(),
                     )
                 break
             except lmbd.exceptions.ResourceConflictException as e:
@@ -111,34 +127,38 @@ def put_function(sess, cluster_name):
         while True:
             try:
                 lmbd.update_function_configuration(
-                    FunctionName=f'awsqs-kubernetes-resource-apply-proxy-{cluster_name}',
-                    Runtime='python3.7',
+                    FunctionName=f"awsqs-kubernetes-resource-apply-proxy-{cluster_name}",
+                    Runtime="python3.7",
                     Role=role_arn,
                     Handler="awsqs_kubernetes_resource.handlers.proxy_wrap",
                     Timeout=900,
                     MemorySize=512,
                     VpcConfig={
-                        'SubnetIds': internal_subnets,
-                        'SecurityGroupIds': eks_vpc_config['securityGroupIds']
-                    }
+                        "SubnetIds": internal_subnets,
+                        "SecurityGroupIds": eks_vpc_config["securityGroupIds"],
+                    },
                 )
                 break
             except lmbd.exceptions.ResourceConflictException as e:
-                if "The operation cannot be performed at this time." not in str(e) and "The function could not be updated due to a concurrent update operation." not in str(e):
+                if "The operation cannot be performed at this time." not in str(
+                    e
+                ) and "The function could not be updated due to a concurrent update operation." not in str(
+                    e
+                ):
                     raise
                 break
 
 
 def invoke_function(func_arn, event, sess):
-    lmbd = sess.client('lambda')
+    lmbd = sess.client("lambda")
     while True:
         try:
             response = lmbd.invoke(
                 FunctionName=func_arn,
-                InvocationType='RequestResponse',
-                Payload=json.dumps(event).encode('utf-8')
+                InvocationType="RequestResponse",
+                Payload=json.dumps(event).encode("utf-8"),
             )
-            return json.loads(response['Payload'].read().decode('utf-8'))
+            return json.loads(response["Payload"].read().decode("utf-8"))
         except lmbd.exceptions.ResourceConflictException as e:
             if "The operation cannot be performed at this time." not in str(e):
                 raise

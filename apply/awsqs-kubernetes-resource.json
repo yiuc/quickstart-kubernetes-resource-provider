@@ -52,6 +52,9 @@
         "/properties/Uid",
         "/properties/CfnId"
     ],
+    "createOnlyProperties": [
+        "/properties/Namespace"
+    ],
     "primaryIdentifier": [
         "/properties/ClusterName",
         "/properties/CfnId"
