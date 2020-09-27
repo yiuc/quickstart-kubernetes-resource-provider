@@ -140,11 +140,11 @@ def delete_handler(
     )
     if not proxy_needed(model.ClusterName, session):
         create_kubeconfig(model.ClusterName)
-    if not get_model(model, session):
-        raise exceptions.NotFound(TYPE_NAME, model.Uid)
     _p, manifest_file, _d = handler_init(
         model, session, request.logicalResourceIdentifier, request.clientRequestToken
     )
+    if not get_model(model, session):
+        raise exceptions.NotFound(TYPE_NAME, model.Uid)
     try:
         run_command(
             "kubectl delete -f %s -n %s" % (manifest_file, model.Namespace),
@@ -292,20 +292,17 @@ def handler_init(model, session, stack_name, token):
     )
 
     physical_resource_id = None
-    manifest_file = None
+    manifest_file = "/tmp/manifest.json"
     if not proxy_needed(model.ClusterName, session):
         create_kubeconfig(model.ClusterName)
     s3_client = session.client("s3")
     if (not model.Manifest and not model.Url) or (model.Manifest and model.Url):
         raise Exception("Either Manifest or Url must be specified.")
-    manifest = {}
     if model.Manifest:
-        manifest_file = "/tmp/manifest.json"
         if model.SelfLink:
             physical_resource_id = model.SelfLink
         manifest = generate_name(model, physical_resource_id, stack_name)
-    elif model.Url:
-        manifest_file = "/tmp/manifest.json"
+    else:
         if re.match(s3_scheme, model.Url):
             response = s3_get(model.Url, s3_client)
         else:
