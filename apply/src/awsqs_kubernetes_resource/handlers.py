@@ -316,7 +316,7 @@ def handler_init(model, session, stack_name, token):
 def add_idempotency_token(manifest, token):
     if "metadata" not in manifest:
         manifest["metadata"] = {}
-    if "annotations" not in manifest:
+    if not manifest.get("metadata", {}).get("annotations"):
         manifest["metadata"]["annotations"] = {}
     manifest["metadata"]["annotations"]["cfn-client-token"] = token
 
