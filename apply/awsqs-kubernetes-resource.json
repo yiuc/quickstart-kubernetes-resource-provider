@@ -69,7 +69,8 @@
                 "ec2:DeleteNetworkInterface",
                 "iam:PassRole",
                 "sts:GetCallerIdentity",
-                "lambda:*"
+                "lambda:*",
+                "s3:GetObject"
             ]
         },
         "read": {
@@ -81,7 +82,8 @@
                 "ec2:DeleteNetworkInterface",
                 "iam:PassRole",
                 "sts:GetCallerIdentity",
-                "lambda:*"
+                "lambda:*",
+                "s3:GetObject"
             ]
         },
         "update": {
@@ -92,7 +94,8 @@
                 "ec2:CreateNetworkInterface",
                 "ec2:DeleteNetworkInterface",
                 "iam:PassRole",
-                "lambda:*"
+                "lambda:*",
+                "s3:GetObject"
             ]
         },
         "delete": {
@@ -104,7 +107,8 @@
                 "ec2:DeleteNetworkInterface",
                 "iam:PassRole",
                 "sts:GetCallerIdentity",
-                "lambda:*"
+                "lambda:*",
+                "s3:GetObject"
             ]
         },
         "list": {
@@ -116,7 +120,8 @@
                 "ec2:DeleteNetworkInterface",
                 "iam:PassRole",
                 "sts:GetCallerIdentity",
-                "lambda:*"
+                "lambda:*",
+                "s3:GetObject"
             ]
         }
     }
