@@ -42,8 +42,7 @@
     },
     "additionalProperties": false,
     "required": [
-        "ClusterName",
-        "Namespace"
+        "ClusterName"
     ],
     "readOnlyProperties": [
         "/properties/Name",
