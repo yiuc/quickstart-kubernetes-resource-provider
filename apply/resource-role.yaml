@@ -29,6 +29,7 @@ Resources:
                 - "eks:DescribeCluster"
                 - "iam:PassRole"
                 - "lambda:*"
+                - "s3:GetObject"
                 - "ssm:GetParameter"
                 - "sts:GetCallerIdentity"
                 Resource: "*"

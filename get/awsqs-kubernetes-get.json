@@ -39,6 +39,12 @@
         "/properties/Response",
         "/properties/Id"
     ],
+    "createOnlyProperties": [
+        "/properties/ClusterName",
+        "/properties/Namespace",
+        "/properties/Name",
+        "/properties/JsonPath"
+    ],
     "primaryIdentifier": [
         "/properties/ClusterName",
         "/properties/Namespace",
